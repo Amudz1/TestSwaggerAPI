@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: testswagger_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 111
+      POSTGRES_DB: testswaggerdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d testswaggerdb"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: testswagger_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORTS=8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=testswaggerdb;Username=postgres;Password=111
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
