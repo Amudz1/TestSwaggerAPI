@@ -1,13 +1,11 @@
-public interface IFakeExternalService
-{
-    Task<GetExternalValue> ExternalValue(int year, int month);
-}
+using TestSwaggerAPI.Models;
+using TestSwaggerAPI.Helpers;
 
-public record GetExternalValue(int Year, int Month, string Value, string WorkDay);
+namespace TestSwaggerAPI.Services;
 
 public class FakeExternalService : IFakeExternalService
 {   
-    public static GetExternalValue ToGev(DateInformation r) =>
+    public static GetExternalValue ToGev(WorkCalendar r) =>
         new (r.Year, r.Month, r.Name, r.WorkDay);
 
     public Task<GetExternalValue> ExternalValue(int year, int month)

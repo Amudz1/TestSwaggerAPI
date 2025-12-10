@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-[Table("DateInformation")]
-public class DateInformation
+namespace TestSwaggerAPI.Models;
+
+[Table("WorkCalendar")]
+public class WorkCalendar
 {
     public int Id { get; set; }
 

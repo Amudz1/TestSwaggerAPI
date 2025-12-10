@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using TestSwaggerAPI.Data;
 
 #nullable disable
 
@@ -20,7 +21,7 @@ namespace TestSwaggerAPI.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("DateInformation", b =>
+            modelBuilder.Entity("TestSwaggerAPI.Models.WorkCalendar", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,7 +48,7 @@ namespace TestSwaggerAPI.Migrations
                     b.HasIndex("Year", "Month")
                         .IsUnique();
 
-                    b.ToTable("DateInformation");
+                    b.ToTable("WorkCalendar");
                 });
 #pragma warning restore 612, 618
         }

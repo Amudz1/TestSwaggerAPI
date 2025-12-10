@@ -5,14 +5,6 @@ COPY ["TestSwaggerAPI.csproj", "./"]
 RUN dotnet restore "TestSwaggerAPI.csproj"
 
 COPY . .
-RUN echo "===== Проверка миграций =====" && \
-    if [ -d "Migrations" ]; then \
-        echo "Папка Migrations найдена:"; \
-        ls -la Migrations; \
-    else \
-        echo "ОШИБКА: Папка Migrations НЕ найдена!"; \
-        exit 1; \
-    fi
 RUN dotnet build "TestSwaggerAPI.csproj" -c Release -o /app/build
 
 FROM build AS publish

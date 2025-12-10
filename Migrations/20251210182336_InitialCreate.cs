@@ -12,7 +12,7 @@ namespace TestSwaggerAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "DateInformation",
+                name: "WorkCalendar",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
@@ -24,12 +24,12 @@ namespace TestSwaggerAPI.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DateInformation", x => x.Id);
+                    table.PrimaryKey("PK_WorkCalendar", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_DateInformation_Year_Month",
-                table: "DateInformation",
+                name: "IX_WorkCalendar_Year_Month",
+                table: "WorkCalendar",
                 columns: new[] { "Year", "Month" },
                 unique: true);
         }
@@ -38,7 +38,7 @@ namespace TestSwaggerAPI.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "DateInformation");
+                name: "WorkCalendar");
         }
     }
 }

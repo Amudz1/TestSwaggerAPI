@@ -2,6 +2,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.EntityFrameworkCore;
 using System.Data.Common;
+using TestSwaggerAPI.Data;
+using TestSwaggerAPI.Models;
+using TestSwaggerAPI.Services;
+using TestSwaggerAPI.Validators;
+
+namespace TestSwaggerAPI.Controllers;
 
 [ApiController]
 [Route("TestSwagger/[controller]")]
@@ -9,23 +15,23 @@ using System.Data.Common;
 public class APIController : ControllerBase
 {
     private readonly ApplicationContext db;
-    private readonly IFakeExternalService fes;
+    private readonly IFakeExternalService fakeExternalService;
     private readonly IMemoryCache memoryCache;
     
     public APIController(ApplicationContext context, IFakeExternalService fakeExternalService, IMemoryCache cache)
     {
         db = context;
-        fes = fakeExternalService;
+        this.fakeExternalService = fakeExternalService;
         memoryCache = cache;
     }
   
     [HttpGet] //------ ПОЛУЧИТЬ ВСЕ ДАННЫЕ ИЗ БД ---------
-    public async Task<ActionResult<IEnumerable<DateInformation>>> Get()
+    public async Task<ActionResult<IEnumerable<WorkCalendar>>> Get()
     {   
         try
         {
-            var allDataBase =  await db.DateInformations.ToListAsync();
-            return Ok(allDataBase);
+            var GetDatabase =  await db.DateInformations.ToListAsync();
+            return Ok(GetDatabase);
         }
         catch
         {
@@ -34,13 +40,13 @@ public class APIController : ControllerBase
     }
 
     [HttpGet("{year:int}/{month:int}")] // ------- ПОЛУЧИТЬ ДАННЫЕ ИЗ БД\ВНЕШНИЙ СЕРВИС\КЕШИРОВАНИЕ ---------
-    public async Task<ActionResult<IEnumerable<DateInformation>>> Get(int year, int month)
+    public async Task<ActionResult<IEnumerable<WorkCalendar>>> Get(int year, int month)
     {
         try
         {
             string key = $"{month}-{year}";
 
-            if(memoryCache.TryGetValue(key, out DateInformation? cached)) return Ok(cached);
+            if(memoryCache.TryGetValue(key, out WorkCalendar? cached)) return Ok(cached);
 
             var datainf = await db.DateInformations
                     .FirstOrDefaultAsync(x => x.Year == year && x.Month == month);
@@ -55,21 +61,6 @@ public class APIController : ControllerBase
                 return BadRequest($"Нет записи на {month}.{year}");
             }
 
-            // var datafes = await fes.ExternalValue(year,month);
-            // var entity = new DateInformation
-            // {
-            //     Year = datafes.year,
-            //     Month = datafes.month,
-            //     Name = datafes.value,
-            //     WorkDay = datafes.workDay
-            // };
-            
-            // db.DateInformations.Add(entity);
-            // await db.SaveChangesAsync();
-
-            // memoryCache.Set(key,entity, TimeSpan.FromMinutes(10));
-            // return Ok(entity);
-
         }
         catch(ArgumentOutOfRangeException)
         {
@@ -83,31 +74,32 @@ public class APIController : ControllerBase
         
     }
 
-    [HttpPost("{year:int}/{month:int}")] // ------- УСТАНОВИТЬ ЗНАЧЕНИЕ --------
-    public async Task<ActionResult<IEnumerable<DateInformation>>> Post(int year, int month)
+    [HttpPost("process")] // ------- УСТАНОВИТЬ ЗНАЧЕНИЕ --------
+    public async Task<ActionResult<IEnumerable<WorkCalendar>>> Post([FromQuery] DateRequest request)
     {
-        var validation = ValidationDate(year,month);
-        if(validation != null) return validation;
+        if (!ModelState.IsValid)
+        return BadRequest(ModelState);
+        
         try
         {
-            var createDate = await fes.ExternalValue(year,month);
+            var createDate = await fakeExternalService.ExternalValue(request.Year, request.Month);
 
             var exitDate =  await db.DateInformations
-                .SingleOrDefaultAsync(x => x.Year == year && x.Month == month);
+                .SingleOrDefaultAsync(x => x.Year == request.Year && x.Month == request.Month);
             
             if (exitDate is null)
             {
-                exitDate = new DateInformation
+                exitDate = new WorkCalendar
                 {
-                    Year = year,
-                    Month = month,
+                    Year = request.Year,
+                    Month = request.Month,
                     Name = createDate.Value,
                     WorkDay = createDate.WorkDay
                 };
                 db.DateInformations.Add(exitDate);
             }else
             {   
-                return Conflict($"Дата {month}.{year} уже существует.");
+                return Conflict($"Дата {request.Month}.{request.Year} уже существует.");
             }
 
             try
@@ -130,13 +122,6 @@ public class APIController : ControllerBase
         }
     }
 
-    private ActionResult? ValidationDate(int year, int month)
-    {
-        if(year < 1900 || year > 2100) 
-            return BadRequest($"Год не должен быть меньше 1900 и больше 2100 на момент {DateTime.Now}");
-        if(month < 1 || month > 12)
-            return BadRequest($"Месяц не может быть меньше 1 и больше 12 на момент {DateTime.Now}");
-        return null;
-    }
+   
 }
 
